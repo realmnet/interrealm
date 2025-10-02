@@ -1,0 +1,15 @@
+{
+  "name": "@interrealm/openapi-spec",
+  "version": "0.1.0",
+  "main": "index.js",
+  "scripts": {
+    "generate": "openapi-typescript openapi.yaml -o generated/api.ts",
+    "validate": "swagger-cli validate openapi.yaml",
+    "bundle": "swagger-cli bundle openapi.yaml -o dist/openapi.yaml",
+    "clean": "rm -rf generated dist"
+  },
+  "devDependencies": {
+    "@apidevtools/swagger-cli": "^4.0.4",
+    "openapi-typescript": "^6.7.1"
+  }
+}

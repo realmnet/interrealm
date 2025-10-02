@@ -1,0 +1,118 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Cluster {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  region    String
+  provider  String
+  endpoint  String
+  status    String
+  metadata  Json
+  resources Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  realms Realm[]
+
+  @@index([status])
+}
+
+model Realm {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  description String?
+  namespace   String
+  status      String
+  config      Json
+  metadata    Json
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  clusterId String
+  cluster   Cluster @relation(fields: [clusterId], references: [id])
+
+  sourceContracts Contract[] @relation("SourceRealm")
+  targetContracts Contract[] @relation("TargetRealm")
+
+  sourceConnections Connection[] @relation("SourceConnection")
+  targetConnections Connection[] @relation("TargetConnection")
+
+  stackMemberships StackMembership[]
+
+  @@index([clusterId])
+  @@index([status])
+}
+
+model Contract {
+  id          String   @id @default(uuid())
+  name        String
+  version     String
+  description String?
+  schema      Json
+  validation  Json
+  status      String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  sourceRealmId String
+  sourceRealm   Realm  @relation("SourceRealm", fields: [sourceRealmId], references: [id])
+
+  targetRealmId String
+  targetRealm   Realm  @relation("TargetRealm", fields: [targetRealmId], references: [id])
+
+  @@unique([name, version])
+  @@index([sourceRealmId])
+  @@index([targetRealmId])
+  @@index([status])
+}
+
+model Stack {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  realms      StackMembership[]
+  connections Connection[]
+}
+
+model StackMembership {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+
+  stackId String
+  stack   Stack  @relation(fields: [stackId], references: [id], onDelete: Cascade)
+
+  realmId String
+  realm   Realm  @relation(fields: [realmId], references: [id], onDelete: Cascade)
+
+  @@unique([stackId, realmId])
+  @@index([stackId])
+  @@index([realmId])
+}
+
+model Connection {
+  id       String @id @default(uuid())
+  protocol String
+  config   Json
+
+  sourceRealmId String
+  sourceRealm   Realm  @relation("SourceConnection", fields: [sourceRealmId], references: [id])
+
+  targetRealmId String
+  targetRealm   Realm  @relation("TargetConnection", fields: [targetRealmId], references: [id])
+
+  stackId String?
+  stack   Stack?  @relation(fields: [stackId], references: [id], onDelete: Cascade)
+
+  @@unique([sourceRealmId, targetRealmId, stackId])
+  @@index([stackId])
+}

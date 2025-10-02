@@ -1,0 +1,58 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: realm-b
+  namespace: realm-b
+  labels:
+    app: realm-b
+    realm: realm-b
+    version: v1
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: realm-b
+      realm: realm-b
+  template:
+    metadata:
+      labels:
+        app: realm-b
+        realm: realm-b
+        version: v1
+    spec:
+      containers:
+      - name: realm-b
+        image: interrealm/realm-b:latest
+        ports:
+        - containerPort: 3002
+        env:
+        - name: PORT
+          value: "3002"
+        - name: REALM_A_URL
+          value: "http://realm-a.realm-a.svc.cluster.local:3001"
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "200m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: realm-b
+  namespace: realm-b
+  labels:
+    app: realm-b
+    realm: realm-b
+spec:
+  type: ClusterIP
+  ports:
+  - port: 3002
+    targetPort: 3002
+    protocol: TCP
+    name: http
+  selector:
+    app: realm-b
+    realm: realm-b

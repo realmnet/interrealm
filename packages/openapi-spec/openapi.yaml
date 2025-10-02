@@ -1,0 +1,452 @@
+openapi: 3.1.0
+info:
+  title: InterRealm Control Plane API
+  version: 0.1.0
+  description: API for managing InterRealm clusters, realms, and contracts
+  contact:
+    name: InterRealm Team
+  license:
+    name: MIT
+
+servers:
+  - url: http://localhost:8080/api/v1
+    description: Local development server
+  - url: https://api.interrealm.io/v1
+    description: Production server
+
+tags:
+  - name: clusters
+    description: Cluster management operations
+  - name: realms
+    description: Realm management operations
+  - name: contracts
+    description: Contract management operations
+  - name: stacks
+    description: Stack management operations
+
+paths:
+  /clusters:
+    get:
+      tags: [clusters]
+      summary: List all clusters
+      operationId: listClusters
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [provisioning, active, updating, degraded, error]
+      responses:
+        200:
+          description: List of clusters
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Cluster'
+
+    post:
+      tags: [clusters]
+      summary: Register a new cluster
+      operationId: registerCluster
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ClusterRegistration'
+      responses:
+        201:
+          description: Cluster registered
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Cluster'
+
+  /clusters/{clusterId}:
+    get:
+      tags: [clusters]
+      summary: Get cluster details
+      operationId: getCluster
+      parameters:
+        - name: clusterId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        200:
+          description: Cluster details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Cluster'
+        404:
+          description: Cluster not found
+
+  /realms:
+    get:
+      tags: [realms]
+      summary: List all realms
+      operationId: listRealms
+      parameters:
+        - name: clusterId
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [pending, running, stopped, error]
+      responses:
+        200:
+          description: List of realms
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Realm'
+
+    post:
+      tags: [realms]
+      summary: Create a new realm
+      operationId: createRealm
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateRealm'
+      responses:
+        201:
+          description: Realm created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Realm'
+
+  /realms/{realmId}:
+    get:
+      tags: [realms]
+      summary: Get realm details
+      operationId: getRealm
+      parameters:
+        - name: realmId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        200:
+          description: Realm details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Realm'
+        404:
+          description: Realm not found
+
+    patch:
+      tags: [realms]
+      summary: Update realm configuration
+      operationId: updateRealm
+      parameters:
+        - name: realmId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateRealm'
+      responses:
+        200:
+          description: Realm updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Realm'
+
+    delete:
+      tags: [realms]
+      summary: Delete a realm
+      operationId: deleteRealm
+      parameters:
+        - name: realmId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        204:
+          description: Realm deleted
+        404:
+          description: Realm not found
+
+  /contracts:
+    get:
+      tags: [contracts]
+      summary: List all contracts
+      operationId: listContracts
+      parameters:
+        - name: sourceRealmId
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: targetRealmId
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [draft, active, deprecated, archived]
+      responses:
+        200:
+          description: List of contracts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Contract'
+
+    post:
+      tags: [contracts]
+      summary: Create a new contract
+      operationId: createContract
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateContract'
+      responses:
+        201:
+          description: Contract created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Contract'
+
+components:
+  schemas:
+    Cluster:
+      type: object
+      required:
+        - id
+        - name
+        - region
+        - provider
+        - endpoint
+        - status
+        - metadata
+        - resources
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        region:
+          type: string
+        provider:
+          type: string
+          enum: [aws, gcp, azure, local]
+        endpoint:
+          type: string
+        status:
+          type: string
+          enum: [provisioning, active, updating, degraded, error]
+        metadata:
+          type: object
+        resources:
+          type: object
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    ClusterRegistration:
+      type: object
+      required:
+        - name
+        - region
+        - provider
+        - endpoint
+      properties:
+        name:
+          type: string
+        region:
+          type: string
+        provider:
+          type: string
+          enum: [aws, gcp, azure, local]
+        endpoint:
+          type: string
+        kubeconfig:
+          type: string
+        metadata:
+          type: object
+
+    Realm:
+      type: object
+      required:
+        - id
+        - name
+        - clusterId
+        - namespace
+        - status
+        - config
+        - metadata
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        clusterId:
+          type: string
+          format: uuid
+        namespace:
+          type: string
+        status:
+          type: string
+          enum: [pending, running, stopped, error]
+        config:
+          type: object
+        metadata:
+          type: object
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    CreateRealm:
+      type: object
+      required:
+        - name
+        - clusterId
+        - namespace
+        - config
+        - metadata
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        clusterId:
+          type: string
+          format: uuid
+        namespace:
+          type: string
+        config:
+          type: object
+        metadata:
+          type: object
+
+    UpdateRealm:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        config:
+          type: object
+        metadata:
+          type: object
+
+    Contract:
+      type: object
+      required:
+        - id
+        - name
+        - version
+        - sourceRealmId
+        - targetRealmId
+        - schema
+        - validation
+        - status
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        version:
+          type: string
+        description:
+          type: string
+        sourceRealmId:
+          type: string
+          format: uuid
+        targetRealmId:
+          type: string
+          format: uuid
+        schema:
+          type: object
+        validation:
+          type: object
+        status:
+          type: string
+          enum: [draft, active, deprecated, archived]
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    CreateContract:
+      type: object
+      required:
+        - name
+        - version
+        - sourceRealmId
+        - targetRealmId
+        - schema
+        - validation
+      properties:
+        name:
+          type: string
+        version:
+          type: string
+        description:
+          type: string
+        sourceRealmId:
+          type: string
+          format: uuid
+        targetRealmId:
+          type: string
+          format: uuid
+        schema:
+          type: object
+        validation:
+          type: object

@@ -1,0 +1,73 @@
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: realm-a-vs
+  namespace: realm-a
+spec:
+  hosts:
+  - "realm-a.local"
+  - "realm-a.realm-a.svc.cluster.local"
+  gateways:
+  - interrealm/interrealm-gateway
+  - mesh
+  http:
+  - match:
+    - uri:
+        prefix: /
+    route:
+    - destination:
+        host: realm-a.realm-a.svc.cluster.local
+        port:
+          number: 3001
+---
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: realm-b-vs
+  namespace: realm-b
+spec:
+  hosts:
+  - "realm-b.local"
+  - "realm-b.realm-b.svc.cluster.local"
+  gateways:
+  - interrealm/interrealm-gateway
+  - mesh
+  http:
+  - match:
+    - uri:
+        prefix: /
+    route:
+    - destination:
+        host: realm-b.realm-b.svc.cluster.local
+        port:
+          number: 3002
+---
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: cross-realm-routing
+  namespace: interrealm
+spec:
+  hosts:
+  - "*.svc.cluster.local"
+  gateways:
+  - mesh
+  http:
+  - match:
+    - headers:
+        x-realm-target:
+          exact: realm-a
+    route:
+    - destination:
+        host: realm-a.realm-a.svc.cluster.local
+        port:
+          number: 3001
+  - match:
+    - headers:
+        x-realm-target:
+          exact: realm-b
+    route:
+    - destination:
+        host: realm-b.realm-b.svc.cluster.local
+        port:
+          number: 3002

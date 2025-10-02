@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: interrealm
+  labels:
+    istio-injection: enabled
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: realm-a
+  labels:
+    istio-injection: enabled
+    realm: realm-a
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: realm-b
+  labels:
+    istio-injection: enabled
+    realm: realm-b

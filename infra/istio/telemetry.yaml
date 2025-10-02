@@ -1,0 +1,29 @@
+apiVersion: telemetry.istio.io/v1alpha1
+kind: Telemetry
+metadata:
+  name: interrealm-metrics
+  namespace: interrealm
+spec:
+  metrics:
+  - providers:
+    - name: prometheus
+    dimensions:
+      source_realm: source.labels["realm"] | "unknown"
+      destination_realm: destination.labels["realm"] | "unknown"
+---
+apiVersion: telemetry.istio.io/v1alpha1
+kind: Telemetry
+metadata:
+  name: interrealm-tracing
+  namespace: interrealm
+spec:
+  tracing:
+  - providers:
+    - name: jaeger
+    customTags:
+      realm_source:
+        literal:
+          value: source.labels["realm"] | "unknown"
+      realm_destination:
+        literal:
+          value: destination.labels["realm"] | "unknown"
