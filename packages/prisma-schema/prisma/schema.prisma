@@ -19,7 +19,8 @@ model Cluster {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  realms Realm[]
+  realms    Realm[]
+  canvases  RealmCanvas[]
 
   @@index([status])
 }
@@ -115,4 +116,21 @@ model Connection {
 
   @@unique([sourceRealmId, targetRealmId, stackId])
   @@index([stackId])
+}
+
+model RealmCanvas {
+  id              String    @id @default(uuid())
+  name            String?
+  clusterId       String
+  cluster         Cluster   @relation(fields: [clusterId], references: [id])
+  canvasData      Json      // Stores { nodes: RealmNode[], edges: RealmEdge[] }
+  version         Int       @default(1)
+  deployed        Boolean   @default(false)
+  lastDeployedAt  DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([clusterId])
+  @@index([deployed])
+  @@index([clusterId, version])
 }

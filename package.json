@@ -11,7 +11,14 @@
     "dev": "turbo run dev",
     "build": "turbo run build",
     "test": "turbo run test",
-    "clean": "turbo run clean"
+    "clean": "turbo run clean",
+    "db:up": "docker-compose -f docker-compose.dev.yml up -d",
+    "db:down": "docker-compose -f docker-compose.dev.yml down",
+    "db:reset": "docker-compose -f docker-compose.dev.yml down -v && docker-compose -f docker-compose.dev.yml up -d",
+    "db:logs": "docker-compose -f docker-compose.dev.yml logs -f postgres",
+    "dev:full": "pnpm db:up && sleep 5 && turbo run dev",
+    "dev:api": "turbo run dev --filter=@interrealm/control-plane",
+    "dev:console": "turbo run dev --filter=@interrealm/console"
   },
   "devDependencies": {
     "turbo": "latest",
